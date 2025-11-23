@@ -6,29 +6,48 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import os
 from datetime import datetime
 
+
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
+
 
 # Inicializar banco de dados
 db = Database('concursos.db')
 
+
 # Agendador de tarefas
 scheduler = BackgroundScheduler()
+
 
 def atualizar_concursos():
     """Função para atualizar concursos em tempo real"""
     print(f"\n[{datetime.now()}] Iniciando atualização de concursos...")
-    
     try:
         concursos = ScraperManager.scrape_all()
+        inseridos, atualizados, erros = 0, 0, 0
         
         for concurso in concursos:
-            db.inserir_concurso(concurso)
+            try:
+                # CORREÇÃO #1: Garantir que campo 'vagas' seja sempre int
+                if 'vagas' in concurso:
+                    if concurso['vagas'] is None or concurso['vagas'] == '':
+                        concurso['vagas'] = 0
+                    else:
+                        # Limpar formatação (remove pontos e vírgulas)
+                        concurso['vagas'] = int(str(concurso['vagas']).replace('.', '').replace(',', '').strip())
+                else:
+                    concurso['vagas'] = 0
+                
+                db.inserir_concurso(concurso)
+                inseridos += 1
+            except Exception as e:
+                print(f"❌ Erro ao inserir concurso '{concurso.get('titulo', '[sem título]')}': {e}")
+                erros += 1
         
-        print(f"✓ Concursos atualizados: {len(concursos)}")
-        
+        print(f"✓ Concursos processados: {len(concursos)} | Inseridos: {inseridos} | Erros: {erros}")
     except Exception as e:
-        print(f"✗ Erro na atualização: {e}")
+        print(f"✗ Erro geral na atualização: {e}")
+
 
 # Configurar job de atualização (a cada 6 horas)
 scheduler.add_job(
@@ -40,7 +59,10 @@ scheduler.add_job(
     replace_existing=True
 )
 
+
 # ===== SERVIR O FRONTEND HTML =====
+
+
 @app.route('/')
 def index():
     """Servir o arquivo index.html"""
@@ -50,7 +72,9 @@ def index():
         print(f"Erro ao servir index.html: {e}")
         return jsonify({'erro': 'index.html não encontrado'}), 404
 
+
 # ===== API ENDPOINTS =====
+
 
 @app.route('/api/health', methods=['GET'])
 def health():
@@ -61,6 +85,7 @@ def health():
         'total_concursos': db.contar_concursos()
     })
 
+
 @app.route('/api/concursos', methods=['GET'])
 def obter_concursos():
     """Obter concursos com filtros"""
@@ -70,60 +95,65 @@ def obter_concursos():
         'fonte': request.args.get('fonte'),
         'busca': request.args.get('busca')
     }
-    
     # Remover filtros vazios
     filtros = {k: v for k, v in filtros.items() if v}
-    
     concursos = db.obter_concursos(filtros)
-    
     return jsonify({
         'total': len(concursos),
         'concursos': concursos,
         'timestamp': datetime.now().isoformat()
     })
 
+
 @app.route('/api/concursos/<int:concurso_id>', methods=['GET'])
 def obter_concurso(concurso_id):
     """Obter detalhes de um concurso específico"""
     concursos = db.obter_concursos()
-    
     concurso = None
     for c in concursos:
         if c['id'] == concurso_id:
             concurso = c
             break
-    
     if not concurso:
         return jsonify({'erro': 'Concurso não encontrado'}), 404
-    
     return jsonify(concurso)
+
 
 @app.route('/api/estatisticas', methods=['GET'])
 def obter_estatisticas():
-    """Obter estatísticas gerais"""
+    """Obter estatísticas gerais - CORRIGIDO"""
     concursos = db.obter_concursos()
-    
     estados = {}
     fontes = {}
     total_vagas = 0
     
     for concurso in concursos:
+        # Contar estados
         estado = concurso.get('estado', 'BR')
         estados[estado] = estados.get(estado, 0) + 1
         
+        # Contar fontes
         fonte = concurso.get('fonte', 'unknown')
         fontes[fonte] = fontes.get(fonte, 0) + 1
         
-        total_vagas += concurso.get('vagas', 0)
+        # CORREÇÃO #2: Converter vagas para int e somar corretamente
+        try:
+            vagas = int(str(concurso.get('vagas', 0)).replace('.', '').replace(',', '').strip())
+        except (ValueError, TypeError):
+            vagas = 0
+        total_vagas += vagas
     
+    # CORREÇÃO #3: Incluir total_fontes na resposta
     return jsonify({
         'total_concursos': len(concursos),
         'total_vagas': total_vagas,
         'total_estados': len(estados),
+        'total_fontes': len(fontes),  # ← ADICIONADO!
         'estados': estados,
         'fontes': fontes,
         'timestamp': datetime.now().isoformat()
     })
+
 
 @app.route('/api/busca', methods=['GET'])
 def busca_avancada():
@@ -142,13 +172,13 @@ def busca_avancada():
         filtros['fonte'] = fonte
     
     concursos = db.obter_concursos(filtros)
-    
     return jsonify({
         'termo_busca': termo,
         'total_resultados': len(concursos),
         'concursos': concursos,
         'timestamp': datetime.now().isoformat()
     })
+
 
 @app.route('/api/atualizar', methods=['POST'])
 def atualizar_manual():
@@ -159,25 +189,25 @@ def atualizar_manual():
         'timestamp': datetime.now().isoformat()
     })
 
+
 @app.errorhandler(404)
 def nao_encontrado(e):
     return jsonify({'erro': 'Endpoint não encontrado'}), 404
+
 
 @app.errorhandler(500)
 def erro_servidor(e):
     return jsonify({'erro': 'Erro interno do servidor'}), 500
 
+
 if __name__ == '__main__':
     print("\n" + "="*60)
     print("🚀 CONCURSOS BRASIL FINDER - Backend")
     print("="*60)
-    
     print("\n⏳ Iniciando sincronização inicial de concursos...")
     atualizar_concursos()
-    
     print("\n⏳ Iniciando scheduler de atualizações automáticas...")
     scheduler.start()
-    
     print(f"\n✓ API rodando em http://localhost:5000")
     print(f"✓ Acesse no navegador: http://localhost:5000")
     print(f"✓ Banco de dados: concursos.db")
@@ -185,10 +215,10 @@ if __name__ == '__main__':
     print("\n" + "="*60)
     print("Pressione CTRL+C para parar o servidor")
     print("="*60 + "\n")
-    
     app.run(
         host='0.0.0.0',
         port=5000,
         debug=False,
-        use_reloader=False
+        use_reloader=False,
+        threaded=True
     )
