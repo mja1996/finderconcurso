@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Concursos Brasil Finder</title>
+  <style>
+    :root {
+      --color-background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --color-surface: #fff;
+      --color-primary: #667eea;
+      --color-primary-hover: #5568d3;
+      --color-secondary: #e9ecef;
+      --color-danger: #d52a1a;
+      --color-success: #10b981;
+      --color-text: #1f2937;
+      --color-border: #e5e7eb;
+      --radius-base: 12px;
+      --radius-sm: 8px;
+      --shadow-base: 0 10px 30px rgba(102, 126, 234, 0.1);
+      --shadow-sm: 0 2px 8px rgba(102, 126, 234, 0.08);
+      --space-0: 0;
+      --space-2: 2px;
+      --space-4: 4px;
+      --space-6: 6px;
+      --space-8: 8px;
+      --space-12: 12px;
+      --space-16: 16px;
+      --space-24: 24px;
+      --space-32: 32px;
+      --font-size-sm: 13px;
+      --font-size: 15px;
+      --font-size-lg: 18px;
+      --font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    }
+    html, body {
+      background: var(--color-background);
+      font-family: var(--font-family);
+      color: var(--color-text);
+      margin: 0;
+      min-height: 100vh;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
+      z-index: -1;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--space-24);
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-16);
+      margin-bottom: var(--space-24);
+      flex-wrap: wrap;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.95);
+      padding: var(--space-24);
+      border-radius: var(--radius-base);
+      box-shadow: var(--shadow-base);
+    }
+    .titulo {
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -.02em;
+      color: var(--color-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-12);
+    }
+    .titulo::before {
+      content: '🏛️';
+      font-size: 2.4rem;
+    }
+    .estatisticas {
+      font-size: var(--font-size-sm);
+      background: var(--color-surface);
+      border-radius: var(--radius-base);
+      box-shadow: var(--shadow-sm);
+      padding: var(--space-12) var(--space-16);
+      display: flex;
+      gap: var(--space-16);
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .estatisticas::before {
+      content: '📊';
+      font-size: 1.2rem;
+    }
+    .filtros-bar {
+      display: flex;
+      gap: var(--space-16);
+      margin-bottom: var(--space-16);
+      flex-wrap: wrap;
+      background: rgba(255, 255, 255, 0.95);
+      padding: var(--space-16);
+      border-radius: var(--radius-base);
+      box-shadow: var(--shadow-base);
+    }
+    .filtros-bar label {
+      font-size: var(--font-size-sm);
+      margin-right: var(--space-2);
+      font-weight: 600;
+      color: var(--color-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--space-6);
+    }
+    .filtros-bar label::before {
+      font-size: 1.1rem;
+    }
+    .filtros-bar label[for="busca"]::before { content: '🔍'; }
+    .filtros-bar label[for="estado"]::before { content: '📍'; }
+    .filtros-bar label[for="status"]::before { content: '✅'; }
+    .filtros-bar label[for="fonte"]::before { content: '🌐'; }
+    .filtros-bar select, .filtros-bar input[type=text] {
+      font-size: var(--font-size);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--color-border);
+      padding: var(--space-6) var(--space-8);
+      background: var(--color-surface);
+    }
+    .filtros-bar .btn-buscar {
+      background: var(--color-primary);
+      color: #fff;
+      border-radius: var(--radius-sm);
+      border: none;
+      padding: var(--space-8) var(--space-16);
+      font-size: var(--font-size-sm);
+      cursor: pointer;
+      font-weight: 500;
+      box-shadow: var(--shadow-base);
+      transition: background .19s;
+    }
+    .filtros-bar .btn-buscar:hover {
+      background: var(--color-primary-hover);
+    }
+    .concursos-lista {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(380px,1fr));
+      gap: var(--space-24);
+      margin-top: var(--space-8);
+    }
+    .card-concurso {
+      background: var(--color-surface);
+      border: 2px solid transparent;
+      border-radius: var(--radius-base);
+      box-shadow: var(--shadow-base);
+      padding: var(--space-16);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-12);
+      position: relative;
+      transition: all 0.3s ease;
+      border-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%) 1;
+    }
+    .card-concurso:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 15px 40px rgba(102, 126, 234, 0.15);
+    }
+    .card-concurso .fonte {
+      font-size: var(--font-size-sm);
+      color: #fff;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: var(--space-4) var(--space-12);
+      border-radius: 20px;
+      align-self: flex-end;
+      font-weight: 600;
+    }
+    .card-concurso .titulo {
+      font-weight: 700;
+      color: var(--color-primary);
+      font-size: var(--font-size-lg);
+      margin-bottom: var(--space-8);
+      display: flex;
+      align-items: center;
+      gap: var(--space-8);
+    }
+    .card-concurso .titulo::before {
+      content: '📋';
+      font-size: 1.4rem;
+    }
+    .card-concurso .info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-12);
+      font-size: var(--font-size-sm);
+      color: #6b7280;
+    }
+    .card-concurso .info span {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+    .card-concurso .info span::before {
+      font-size: 1rem;
+    }
+    .card-concurso .info span:nth-child(1)::before { content: '🏢'; }
+    .card-concurso .info span:nth-child(2)::before { content: '✔️'; }
+    .card-concurso .info span:nth-child(3)::before { content: '👥'; }
+    .card-concurso .info span:nth-child(4)::before { content: '📍'; }
+    .card-concurso .info span:nth-child(5)::before { content: '🎓'; }
+    .card-concurso .info span:nth-child(6)::before { content: '💰'; }
+    .card-concurso .info span:nth-child(7)::before { content: '🏛️'; }
+    .card-concurso .info span:nth-child(8)::before { content: '📅'; }
+    .card-concurso .btn-candidatar {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #fff;
+      padding: var(--space-10) var(--space-16);
+      border-radius: var(--radius-base);
+      border: none;
+      font-weight: 600;
+      font-size: var(--font-size-sm);
+      cursor: pointer;
+      margin-top: var(--space-8);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-6);
+    }
+    .card-concurso .btn-candidatar::before {
+      content: '✓ ';
+      font-weight: 700;
+    }
+    .card-concurso .btn-candidatar:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    }
+    .card-concurso .btn-detalhes {
+      margin-left: var(--space-12);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      border-radius: var(--radius-base);
+      border: none;
+      font-weight: 600;
+      padding: var(--space-10) var(--space-16);
+      cursor: pointer;
+      font-size: var(--font-size-sm);
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: var(--space-6);
+    }
+    .card-concurso .btn-detalhes::before {
+      content: 'ℹ️ ';
+    }
+    .card-concurso .btn-detalhes:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+    .modal {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(18,32,35,0.32);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .modal-content {
+      background: var(--color-surface);
+      padding: var(--space-24);
+      border-radius: var(--radius-base);
+      max-width: 420px;
+      min-width: 300px;
+      box-shadow: 0 12px 40px rgba(33,128,141,0.07);
+      position: relative;
+    }
+    .modal-content .titulo {
+      font-size: var(--font-size-lg);
+      color: var(--color-primary);
+      font-weight: 700;
+      margin-bottom: var(--space-12);
+      display: flex;
+      align-items: center;
+      gap: var(--space-8);
+    }
+    .modal-content .titulo::before {
+      content: '📄';
+      font-size: 1.4rem;
+    }
+    .modal-content .btn-fechar {
+      position: absolute;
+      right: var(--space-12); top: var(--space-12);
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      border: none;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 24px;
+      padding: var(--space-4) var(--space-8);
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    }
+    .modal-content .btn-fechar:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+    @media (max-width:600px){
+      .container { padding:var(--space-6);}
+      .concursos-lista { grid-template-columns:1fr; }
+      .modal-content { min-width:80vw; }
+      header { flex-direction:column; gap:var(--space-8);}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <span class="titulo">Concursos Brasil Finder</span>
+        <span style="font-size:15px;color:#21808d;">Encontre concursos públicos em tempo real</span>
+      </div>
+      <div class="estatisticas" id="estatisticas">Carregando estatísticas...</div>
+    </header>
+    <div class="filtros-bar" id="filtros-bar">
+      <label for="busca">Busca:</label>
+      <input type="text" id="busca" maxlength="60" placeholder="Cargo, órgão, banca...">
+      <label for="estado">Estado:</label>
+      <select id="estado">
+        <option value="">Todos</option>
+        <option value="AC">AC</option>
+        <option value="AL">AL</option>
+        <option value="AP">AP</option>
+        <option value="AM">AM</option>
+        <option value="BA">BA</option>
+        <option value="CE">CE</option>
+        <option value="DF">DF</option>
+        <option value="ES">ES</option>
+        <option value="GO">GO</option>
+        <option value="MA">MA</option>
+        <option value="MT">MT</option>
+        <option value="MS">MS</option>
+        <option value="MG">MG</option>
+        <option value="PA">PA</option>
+        <option value="PB">PB</option>
+        <option value="PR">PR</option>
+        <option value="PE">PE</option>
+        <option value="PI">PI</option>
+        <option value="RJ">RJ</option>
+        <option value="RN">RN</option>
+        <option value="RS">RS</option>
+        <option value="RO">RO</option>
+        <option value="RR">RR</option>
+        <option value="SC">SC</option>
+        <option value="SP">SP</option>
+        <option value="SE">SE</option>
+        <option value="TO">TO</option>
+      </select>
+      <label for="status">Status:</label>
+      <select id="status">
+        <option value="">Todos</option>
+        <option value="open">Aberto</option>
+        <option value="previsto">Previsto</option>
+        <option value="encerrado">Encerrado</option>
+      </select>
+      <label for="fonte">Fonte:</label>
+      <select id="fonte">
+        <option value="">Todas</option>
+        <option value="concursosnobrasil">Concursos No Brasil</option>
+        <option value="qconcursos">QConcursos</option>
+        <option value="ache">AcheConcursos</option>
+        <option value="concursos.com.br">Concursos.com.br</option>
+      </select>
+      <button class="btn-buscar" onclick="buscarConcursos()">Buscar</button>
+    </div>
+    <div id="concursos-container">
+      <div style="margin-top:32px;font-size:15px;color:#21808d;text-align:center;">Carregando concursos...</div>
+    </div>
+  </div>
+  <div id="modal" class="modal" style="display:none;">
+    <div class="modal-content" id="modal-content"></div>
+  </div>
+  <script>
+    // Configuração da URL da API
+    const API_HOST = location.hostname === 'localhost' ? 'http://localhost:5000' : '';
+
+    function getFiltroValue(id){return document.getElementById(id).value.trim();}
+
+    // Estatísticas
+    async function carregarEstatisticas() {
+      try {
+        const res = await fetch(`${API_HOST}/api/estatisticas`);
+        const data = await res.json();
+        let html = `
+          <b>Total de concursos:</b> ${data.total_concursos} |
+          <b>Total de vagas:</b> ${data.total_vagas} |
+          <b>Estados:</b> ${Object.keys(data.estados).length} |
+          <b>Fontes:</b> ${Object.keys(data.fontes).map(f=>f.replace('.','')).join(', ')}
+        `;
+        document.getElementById('estatisticas').innerHTML = html;
+      } catch(e) {
+        document.getElementById('estatisticas').innerHTML = '<span style="color:#d52a1a;">Erro ao carregar estatísticas</span>';
+      }
+    }
+
+    // Buscar concursos
+    async function buscarConcursos() {
+      let busca = getFiltroValue('busca');
+      let estado = getFiltroValue('estado');
+      let status = getFiltroValue('status');
+      let fonte = getFiltroValue('fonte');
+      let url = `${API_HOST}/api/concursos?` + 
+        `busca=${encodeURIComponent(busca)}&estado=${encodeURIComponent(estado)}&status=${encodeURIComponent(status)}&fonte=${encodeURIComponent(fonte)}`;
+      document.getElementById('concursos-container').innerHTML = '<div style="margin-top:32px;font-size:15px;color:#21808d;text-align:center;">Buscando concursos...</div>';
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        renderConcursos(data.concursos);
+        carregarEstatisticas();
+      } catch(e){
+        document.getElementById('concursos-container').innerHTML = '<div style="margin-top:32px;color:#fff;text-align:center;background:linear-gradient(135deg, #ef4444 0%, #dc2626 100%);padding:20px;border-radius:12px;box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);font-weight:600;display:flex;align-items:center;justify-content:center;gap:12px;"><span style="font-size:1.8rem;">❌</span><span>Erro ao buscar concursos. Verifique sua conexão.</span></div>';
+      }
+    }
+
+    // Render concursos
+    function renderConcursos(concursos){
+      if(!concursos.length){
+        document.getElementById('concursos-container').innerHTML =
+          `<div style="margin-top:32px;color:#fff;text-align:center;background:linear-gradient(135deg, #f97316 0%, #ea580c 100%);padding:20px;border-radius:12px;box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);font-weight:600;display:flex;align-items:center;justify-content:center;gap:12px;">
+            <span style="font-size:1.8rem;">⚠️</span>
+            <span>Nenhum concurso encontrado com os filtros selecionados.</span></div>`;
+        return;
+      }
+      let html = '<div class="concursos-lista">';
+      concursos.forEach(c=>{
+        html += `
+          <div class="card-concurso">
+            <span class="fonte">${c.fonte?c.fonte.replace('.',''):'sem fonte'}</span>
+            <span class="titulo">${c.titulo}</span>
+            <div class="info">
+              <span><b>Órgão:</b> ${c.organizacao || '-'}</span>
+              <span><b>Status:</b> ${c.status || '-'}</span>
+              <span><b>Vagas:</b> ${c.vagas || '-'}</span>
+              <span><b>Estado:</b> ${c.estado || '-'}</span>
+              <span><b>Escolaridade:</b> ${c.escolaridade || '-'}</span>
+              <span><b>Salário:</b> ${c.salario || '-'}</span>
+              <span><b>Banca:</b> ${c.banca || '-'}</span>
+              <span><b>Publicação:</b> ${c.data_publicacao||'-'}</span>
+            </div>
+            <a href="${c.link_edital||'#'}" class="btn-candidatar" target="_blank">Candidatar</a>
+            <button class="btn-detalhes" onclick='abrirModalDetalhes(${JSON.stringify(c).replace(/'/g,"&#39;")})'>Detalhes</button>
+          </div>
+        `;
+      });
+      html += '</div>';
+      document.getElementById('concursos-container').innerHTML = html;
+    }
+
+    function abrirModalDetalhes(concurso){
+      let html = `
+        <button class="btn-fechar" onclick="fecharModal()">✖</button>
+        <div class="titulo">${concurso.titulo}</div>
+        <div style="font-size:14px;color:#21808d; margin-bottom:8px;">${concurso.organizacao}</div>
+        <div><b>Vagas:</b> ${concurso.vagas || '-'}</div>
+        <div><b>Estado:</b> ${concurso.estado || '-'}</div>
+        <div><b>Status:</b> ${concurso.status || '-'}</div>
+        <div><b>Escolaridade:</b> ${concurso.escolaridade || '-'}</div>
+        <div><b>Salário:</b> ${concurso.salario || '-'}</div>
+        <div><b>Banca:</b> ${concurso.banca || '-'}</div>
+        <div><b>Publicado em:</b> ${concurso.data_publicacao||'-'}</div>
+        <div><b>Fonte:</b> ${concurso.fonte || '-'}</div>
+        <a href="${concurso.link_edital||'#'}" class="btn-candidatar" style="margin-top:12px;" target="_blank">Ver Edital/Inscrição</a>
+        <div style="margin-top:12px;font-size:15px;">${concurso.descricao||'<i>sem descrição</i>'}</div>
+      `;
+      document.getElementById('modal').style.display='flex';
+      document.getElementById('modal-content').innerHTML=html;
+    }
+    function fecharModal(){
+      document.getElementById('modal').style.display='none';
+    }
+
+    // Enter para buscar
+    document.getElementById('busca').onkeydown = function(e){
+      if(e.key==='Enter'){buscarConcursos();}
+    };
+
+    // Buscar automaticamente ao carregar
+    buscarConcursos();
+    carregarEstatisticas();
+  </script>
+</body>
+</html>

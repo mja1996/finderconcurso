@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concursos Brasil Finder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #7c3aed;
+            --primary-dark: #6d28d9;
+            --primary-light: #a78bfa;
+            --secondary: #ec4899;
+            --danger: #ef4444;
+            --warning: #f97316;
+            --success: #10b981;
+            --info: #3b82f6;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--gray-800);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            color: var(--primary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        header p {
+            color: var(--gray-500);
+            font-size: 1.1em;
+        }
+
+        /* ===== STATS ===== */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 10px 0;
+        }
+
+        .stat-card .label {
+            color: var(--gray-500);
+            font-size: 0.9em;
+        }
+
+        .stat-card .icon {
+            font-size: 2em;
+        }
+
+        /* ===== STATUS MESSAGES ===== */
+        .status {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+
+        .status--info {
+            background: #dbeafe;
+            color: #1e3a8a;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .status--warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .status--error {
+            background: #fee2e2;
+            color: #7f1d1d;
+            border-left: 4px solid #ef4444;
+        }
+
+        .status--success {
+            background: #dcfce7;
+            color: #166534;
+            border-left: 4px solid #10b981;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        /* ===== FILTERS ===== */
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.05), rgba(236, 72, 153, 0.05));
+            border-radius: 12px;
+            border: 1px solid rgba(124, 58, 237, 0.1);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 12px;
+            border: 2px solid var(--gray-200);
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+            background: rgba(124, 58, 237, 0.02);
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn-search {
+            grid-column: 1 / -1;
+            padding: 14px 30px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+        }
+
+        .btn-search:active {
+            transform: translateY(0);
+        }
+
+        /* ===== CARDS GRID ===== */
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(124, 58, 237, 0.15);
+            border-color: var(--primary);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .card-title {
+            font-size: 1.1em;
+            font-weight: 700;
+            color: var(--gray-900);
+            flex: 1;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .badge--open {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge--previsto {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge--encerrado {
+            background: #fee2e2;
+            color: #7f1d1d;
+        }
+
+        .card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.95em;
+            color: var(--gray-600);
+        }
+
+        .info-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-row strong {
+            color: var(--gray-800);
+            min-width: 80px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-candidatar {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-candidatar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-detalhes {
+            background: linear-gradient(135deg, var(--info), #2563eb);
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-detalhes:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        /* ===== MODAL ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .modal-header h2 {
+            color: var(--primary);
+            font-size: 1.5em;
+        }
+
+        .btn-close {
+            background: var(--gray-100);
+            color: var(--gray-600);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5em;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-close:hover {
+            background: var(--gray-200);
+            color: var(--gray-900);
+        }
+
+        .modal-info {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .modal-info-row {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .modal-info-row label {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 0.9em;
+        }
+
+        .modal-info-row value {
+            color: var(--gray-700);
+            word-break: break-word;
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray-500);
+        }
+
+        .empty-state h3 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            color: var(--gray-700);
+        }
+
+        .empty-state p {
+            font-size: 1em;
+        }
+
+        /* ===== PAGINATION ===== */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .pagination button {
+            padding: 10px 16px;
+            border: 2px solid var(--gray-300);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .pagination button:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .pagination button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .filters {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-search {
+                grid-column: 1;
+            }
+
+            .cards-container {
+                grid-template-columns: 1fr;
+            }
+
+            .card-actions {
+                flex-direction: column;
+            }
+
+            .modal-content {
+                margin: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 20px;
+            }
+
+            header h1 {
+                font-size: 1.5em;
+            }
+
+            .main {
+                padding: 15px;
+            }
+
+            .filters {
+                padding: 15px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <header>
+            <h1>🏛️ Concursos Brasil Finder</h1>
+            <p>Busque concursos públicos do Brasil em uma só plataforma</p>
+        </header>
+
+        <!-- STATS -->
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="icon">📊</div>
+                <div class="label">Total de Concursos</div>
+                <div class="value" id="total-concursos">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">👥</div>
+                <div class="label">Total de Vagas</div>
+                <div class="value" id="total-vagas">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🗺️</div>
+                <div class="label">Estados Ativos</div>
+                <div class="value" id="total-estados">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🌐</div>
+                <div class="label">Fontes de Dados</div>
+                <div class="value" id="total-fontes">-</div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main">
+            <!-- FILTERS -->
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="busca">🔍 Buscar Concurso</label>
+                    <input type="text" id="busca" placeholder="Ex: professor, engenheiro...">
+                </div>
+                <div class="filter-group">
+                    <label for="estado">📍 Estado</label>
+                    <select id="estado">
+                        <option value="">Todos os Estados</option>
+                        <option value="SP">São Paulo (SP)</option>
+                        <option value="RJ">Rio de Janeiro (RJ)</option>
+                        <option value="MG">Minas Gerais (MG)</option>
+                        <option value="BA">Bahia (BA)</option>
+                        <option value="RS">Rio Grande do Sul (RS)</option>
+                        <option value="PE">Pernambuco (PE)</option>
+                        <option value="CE">Ceará (CE)</option>
+                        <option value="PA">Pará (PA)</option>
+                        <option value="SC">Santa Catarina (SC)</option>
+                        <option value="PR">Paraná (PR)</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="status">✅ Status</label>
+                    <select id="status">
+                        <option value="">Todos os Status</option>
+                        <option value="open">Abertos</option>
+                        <option value="previsto">Previstos</option>
+                        <option value="encerrado">Encerrados</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="fonte">🌐 Fonte</label>
+                    <select id="fonte">
+                        <option value="">Todas as Fontes</option>
+                        <option value="qconcursos">QConcursos</option>
+                        <option value="concursosnobrasil">Concursos No Brasil</option>
+                        <option value="acheconcursos">Ache Concursos</option>
+                        <option value="vunesp">Vunesp</option>
+                        <option value="cebraspe">Cebraspe</option>
+                    </select>
+                </div>
+                <button class="btn-search" onclick="buscarConcursos()">🔎 Buscar Concursos</button>
+            </div>
+
+            <!-- RESULTS -->
+            <div id="resultado"></div>
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-titulo">Detalhes do Concurso</h2>
+                <button class="btn-close" onclick="fecharModal()">✕</button>
+            </div>
+            <div class="modal-info" id="modal-info"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_HOST = 'http://localhost:5000';
+        let concursosPaginacao = [];
+        const ITENS_POR_PAGINA = 12;
+        let paginaAtual = 1;
+
+        // Carrega as estatísticas ao iniciar
+        window.addEventListener('load', () => {
+            carregarEstatisticas();
+            buscarConcursos();
+        });
+
+        function carregarEstatisticas() {
+            console.log('Carregando estatísticas...');
+            fetch(`${API_HOST}/api/estatisticas`)
+                .then(res => res.json())
+                .then(data => {
+                    console.log('Dados de estatísticas:', data);
+                    document.getElementById('total-concursos').textContent = data.total_concursos || 0;
+                    document.getElementById('total-vagas').textContent = (data.total_vagas || 0).toLocaleString('pt-BR');
+                    document.getElementById('total-estados').textContent = data.total_estados || 0;
+                    document.getElementById('total-fontes').textContent = Object.keys(data.fontes || {}).length;
+                })
+                .catch(err => {
+                    console.error('Erro ao carregar estatísticas:', err);
+                    document.getElementById('total-concursos').textContent = 'Erro';
+                    document.getElementById('total-vagas').textContent = 'Erro';
+                    document.getElementById('total-estados').textContent = 'Erro';
+                    document.getElementById('total-fontes').textContent = 'Erro';
+                });
+        }
+
+        function buscarConcursos() {
+            const busca = document.getElementById('busca').value;
+            const estado = document.getElementById('estado').value;
+            const status = document.getElementById('status').value;
+            const fonte = document.getElementById('fonte').value;
+
+            let url = `${API_HOST}/api/concursos?`;
+            if (busca) url += `busca=${encodeURIComponent(busca)}&`;
+            if (estado) url += `estado=${estado}&`;
+            if (status) url += `status=${status}&`;
+            if (fonte) url += `fonte=${fonte}&`;
+
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = '<div class="status status--info">🔄 Buscando concursos...</div>';
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    console.log('Concursos encontrados:', data.concursos.length);
+                    concursosPaginacao = data.concursos || [];
+                    paginaAtual = 1;
+                    mostrarConcursos();
+                })
+                .catch(err => {
+                    console.error('Erro na busca:', err);
+                    resultado.innerHTML = '<div class="status status--error">❌ Erro ao buscar concursos. Tente novamente.</div>';
+                });
+        }
+
+        function mostrarConcursos() {
+            const resultado = document.getElementById('resultado');
+
+            if (concursosPaginacao.length === 0) {
+                resultado.innerHTML = '<div class="empty-state"><h3>😔 Nenhum concurso encontrado</h3><p>Tente ajustar seus filtros e buscar novamente</p></div>';
+                return;
+            }
+
+            const inicio = (paginaAtual - 1) * ITENS_POR_PAGINA;
+            const fim = inicio + ITENS_POR_PAGINA;
+            const concursosPagina = concursosPaginacao.slice(inicio, fim);
+
+            let html = `<div class="status status--success">✓ ${concursosPaginacao.length} concurso(s) encontrado(s)</div>`;
+            html += '<div class="cards-container">';
+
+            concursosPagina.forEach(concurso => {
+                const status = concurso.status === 'open' ? 'Aberto' : concurso.status === 'previsto' ? 'Previsto' : 'Encerrado';
+                const classBadge = concurso.status === 'open' ? 'badge--open' : concurso.status === 'previsto' ? 'badge--previsto' : 'badge--encerrado';
+
+                html += `
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">${concurso.titulo || 'Sem título'}</div>
+                            <span class="badge ${classBadge}">${status}</span>
+                        </div>
+                        <div class="card-info">
+                            <div class="info-row">
+                                <strong>🏢 Órgão:</strong>
+                                <span>${concurso.organizacao || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <strong>👥 Vagas:</strong>
+                                <span>${concurso.vagas || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <strong>📍 Estado:</strong>
+                                <span>${concurso.estado || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <strong>🎓 Escolaridade:</strong>
+                                <span>${concurso.escolaridade || 'N/A'}</span>
+                            </div>
+                            <div class="info-row">
+                                <strong>🌐 Fonte:</strong>
+                                <span>${concurso.fonte || 'N/A'}</span>
+                            </div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn btn-candidatar" onclick="candidatar('${concurso.link_edital || '#'}')">
+                                ✓ Candidatar
+                            </button>
+                            <button class="btn btn-detalhes" onclick="mostrarDetalhes(${JSON.stringify(concurso).replace(/"/g, '&quot;')})">
+                                📋 Detalhes
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+
+            // Paginação
+            const totalPaginas = Math.ceil(concursosPaginacao.length / ITENS_POR_PAGINA);
+            if (totalPaginas > 1) {
+                html += '<div class="pagination">';
+                for (let i = 1; i <= totalPaginas; i++) {
+                    html += `<button ${i === paginaAtual ? 'class="active"' : ''} onclick="irParaPagina(${i})">${i}</button>`;
+                }
+                html += '</div>';
+            }
+
+            resultado.innerHTML = html;
+        }
+
+        function irParaPagina(pagina) {
+            paginaAtual = pagina;
+            mostrarConcursos();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function mostrarDetalhes(concurso) {
+            const modal = document.getElementById('modal');
+            const modalTitulo = document.getElementById('modal-titulo');
+            const modalInfo = document.getElementById('modal-info');
+
+            modalTitulo.textContent = concurso.titulo || 'Detalhes do Concurso';
+
+            let html = `
+                <div class="modal-info-row">
+                    <label>📋 Título</label>
+                    <value>${concurso.titulo || 'N/A'}</value>
+                </div>
+                <div class="modal-info-row">
+                    <label>🏢 Organização</label>
+                    <value>${concurso.organizacao || 'N/A'}</value>
+                </div>
+                <div class="modal-info-row">
+                    <label>👥 Vagas</label>
+                    <value>${concurso.vagas || 'N/A'}</value>
+                </div>
+                <div class="modal-info-row">
+                    <label>📍 Estado</label>
+                    <value>${concurso.estado || 'N/A'}</value>
+                </div>
+                <div class="modal-info-row">
+                    <label>🎓 Escolaridade</label>
+                    <value>${concurso.escolaridade || 'N/A'}</value>
+                </div>
+                <div class="modal-info-row">
+                    <label>💰 Salário</label>
+                    <value>${concurso.salario || 'N/A'}</value>
+                </div>
+                <div class="modal-info-row">
+                    <label>🏛️ Banca</label>
+                    <value>${concurso.banca || 'N/A'}</value>
+                </div>
+                <div class="modal-info-row">
+                    <label>🌐 Fonte</label>
+                    <value>${concurso.fonte || 'N/A'}</value>
+                </div>
+                <div class="modal-info-row">
+                    <label>✅ Status</label>
+                    <value>${concurso.status === 'open' ? 'Aberto' : concurso.status === 'previsto' ? 'Previsto' : 'Encerrado'}</value>
+                </div>
+                <div class="modal-info-row">
+                    <label>📅 Data de Publicação</label>
+                    <value>${concurso.data_publicacao || 'N/A'}</value>
+                </div>
+                <div class="modal-info-row">
+                    <label>📝 Descrição</label>
+                    <value>${concurso.descricao || 'Sem descrição disponível'}</value>
+                </div>
+            `;
+
+            modalInfo.innerHTML = html;
+            modal.classList.add('active');
+        }
+
+        function fecharModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        function candidatar(link) {
+            if (link && link !== '#') {
+                window.open(link, '_blank');
+            }
+        }
+
+        // Fechar modal ao clicar fora
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                fecharModal();
+            }
+        });
+    </script>
+</body>
+</html>
